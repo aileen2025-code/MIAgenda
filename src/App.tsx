@@ -20,8 +20,10 @@ import {
 
 type Prioridad = 'Baja' | 'Media' | 'Alta';
 type FiltroEstado = 'todas' | 'pendientes' | 'completadas';
+type FiltroPrioridad = 'Todas' | Prioridad;
 
 const PRIORIDADES: Prioridad[] = ['Baja', 'Media', 'Alta'];
+const FILTROS_PRIORIDAD: FiltroPrioridad[] = ['Todas', 'Alta', 'Media', 'Baja'];
 
 interface Actividad {
   id: number;
@@ -146,6 +148,7 @@ export default function App() {
   const [fechaLimite, setFechaLimite] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('todas');
+  const [filtroPrioridad, setFiltroPrioridad] = useState<FiltroPrioridad>('Todas');
   const [errorTexto, setErrorTexto] = useState(false);
 
   const todayISO = getTodayISO();
@@ -168,6 +171,9 @@ export default function App() {
   const actividadesFiltradas = actividades.filter((item) => {
     if (filtroEstado === 'pendientes' && item.completada) return false;
     if (filtroEstado === 'completadas' && !item.completada) return false;
+    if (filtroPrioridad !== 'Todas' && item.prioridad !== filtroPrioridad) {
+      return false;
+    }
     if (consultaNormalizada) {
       return item.nombre.toLowerCase().includes(consultaNormalizada);
     }
@@ -197,6 +203,9 @@ export default function App() {
     setErrorTexto(false);
     if (filtroEstado === 'completadas') {
       setFiltroEstado('todas');
+    }
+    if (filtroPrioridad !== 'Todas' && filtroPrioridad !== prioridad) {
+      setFiltroPrioridad('Todas');
     }
   };
 
@@ -479,6 +488,42 @@ export default function App() {
                 </button>
               )}
             </div>
+
+            {/* Selector de filtros por prioridad debajo de la barra de búsqueda */}
+            <div
+              role="tablist"
+              aria-label="Filtrar actividades por prioridad"
+              className="grid grid-cols-4 gap-1 rounded-xl border border-[#1E2945] bg-[#11192E] p-1"
+            >
+              {FILTROS_PRIORIDAD.map((opcion) => {
+                const isSelected = filtroPrioridad === opcion;
+                const activeClass =
+                  opcion === 'Alta'
+                    ? 'bg-rose-600 text-white'
+                    : opcion === 'Media'
+                      ? 'bg-[#F59E0B] text-slate-950 font-bold'
+                      : opcion === 'Baja'
+                        ? 'bg-sky-600 text-white'
+                        : 'bg-[#1A56FA] text-white';
+
+                return (
+                  <button
+                    key={opcion}
+                    type="button"
+                    role="tab"
+                    aria-selected={isSelected}
+                    onClick={() => setFiltroPrioridad(opcion)}
+                    className={`min-h-[44px] rounded-lg px-2 py-2 text-xs font-semibold transition-colors whitespace-nowrap focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:outline-none ${
+                      isSelected
+                        ? activeClass
+                        : 'text-slate-300 hover:bg-white/5'
+                    }`}
+                  >
+                    {opcion}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Lista de actividades */}
@@ -503,12 +548,15 @@ export default function App() {
                   ? `No encontramos actividades con «${busqueda.trim()}».`
                   : 'Prueba seleccionando otro filtro arriba.'}
               </p>
-              {(busqueda.trim() || filtroEstado !== 'todas') && (
+              {(busqueda.trim() ||
+                filtroEstado !== 'todas' ||
+                filtroPrioridad !== 'Todas') && (
                 <button
                   type="button"
                   onClick={() => {
                     setBusqueda('');
                     setFiltroEstado('todas');
+                    setFiltroPrioridad('Todas');
                   }}
                   className="mt-4 flex min-h-[44px] items-center justify-center rounded-xl bg-[#1A56FA] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
                 >
